@@ -126,3 +126,54 @@ si on regarde 2009 on a 2/3 cas 1/ credit card
 
 0 à 5, Cre CRE CRD Credit CREDIT CAS  Cas CSH CASH Cash Dis DIS Dispute No NOC No Charge NA
 
+
+## Probleme de performance :
+
+La tranformation des données est rapide : 1/12 du dataset en 22 min. Mais apres plus de 10 heures la sauvegarde n'est pas tereminée. Le filtrage et l'écriture sont lents.
+
+Une solution est d'utiliser le partitionnement d'Iceberg.
+ 
+```python
+spark.sql("CREATE TABLE IF NOT EXISTS local.nyc.tempo_yellow (\
+VendorID string, tpep_pickup_datetime timestamp, tpep_dropoff_datetime timestamp, passenger_count double,trip_distance double,\
+RatecodeID string, store_and_fwd_flag string, PULocationID integer, DOLocationID integer, Payment_Type string, fare_amount double,\
+extra double, mta_tax double, tip_amount double, tolls_amount double, improvement_surcharge double, total_amount double, \
+congestion_surcharge double, airport_fee double) \
+USING iceberg PARTITIONED BY (months(tpep_pickup_datetime));")
+```
+
+```bash
+[tdp_user@edge-01 ~]$ hdfs dfs -du  -h warehouse_hadoop_iceberg/nyc/tempo_yellow/data
+77.8 K   233.4 K  warehouse_hadoop_iceberg/nyc/tempo_yellow/data/tpep_pickup_datetime_month=2001-01
+5.3 K    15.8 K   warehouse_hadoop_iceberg/nyc/tempo_yellow/data/tpep_pickup_datetime_month=2001-02
+5.4 K    16.2 K   warehouse_hadoop_iceberg/nyc/tempo_yellow/data/tpep_pickup_datetime_month=2001-08
+12.1 K   36.2 K   warehouse_hadoop_iceberg/nyc/tempo_yellow/data/tpep_pickup_datetime_month=2002-02
+16.4 K   49.3 K   warehouse_hadoop_iceberg/nyc/tempo_yellow/data/tpep_pickup_datetime_month=2002-10
+94.1 K   282.2 K  warehouse_hadoop_iceberg/nyc/tempo_yellow/data/tpep_pickup_datetime_month=2002-12
+125.7 K  377.1 K  warehouse_hadoop_iceberg/nyc/tempo_yellow/data/tpep_pickup_datetime_month=2003-01
+5.3 K    16.0 K   warehouse_hadoop_iceberg/nyc/tempo_yellow/data/tpep_pickup_datetime_month=2003-03
+5.3 K    15.8 K   warehouse_hadoop_iceberg/nyc/tempo_yellow/data/tpep_pickup_datetime_month=2003-12
+5.4 K    16.2 K   warehouse_hadoop_iceberg/nyc/tempo_yellow/data/tpep_pickup_datetime_month=2004-04
+```
+
+Au final 300 min !
+
+```bash
+[tdp_user@edge-01 ~]$ hdfs dfs -du  -h warehouse_hadoop_iceberg/nyc/tempo_yellow/
+19.0 G  56.9 G  warehouse_hadoop_iceberg/nyc/tempo_yellow/data
+15.8 M  47.4 M  warehouse_hadoop_iceberg/nyc/tempo_yellow/metadata
+[tdp_user@edge-01 ~]$ hdfs dfs -du  -h data
+26.3 G   79.0 G   data/my_nyc_yellow_taxi_trip_corrected
+25.9 G   77.8 G   data/nyc_yellow_taxi_trip
+109.9 K  329.6 K  data/taxis_zone.parquet
+```
+
+On peut noter :
+
+* beaucoup de métadonnées. C'est ce qui permet d'accélérer le traitement. Par le nombre d'enregistrement par partition est stocké 
+* la table transformée est plus grande. Probablement l'abscence de paramétrage dans l'écriture des fichiers parquets.
+
+Le chargement de ces données dans iceberg (pour ne pas avoir x snap) :
+
+
+
