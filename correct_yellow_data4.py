@@ -271,8 +271,8 @@ for fileStatus in status:
                                   .when(df.Payment_Type == 'CAS',"2").when(df.Payment_Type == 'Cas',"2").when(df.Payment_Type == 'CSH',"2").when(df.Payment_Type == 'CASH',"2")\
                                   .when(df.Payment_Type == 'Cash' ,"2") \
                                   .when(df.Payment_Type == 'DIS',"4").when(df.Payment_Type == 'Dis',"4").when(df.Payment_Type == 'Dispute', "4") \
-                                  .when(df.Payment_Type == 'UNK',"0").when( df.Payment_Type ==  'Unknown',"0").when( df.Payment_Type ==  'UNKNOWN' , "0").when(df.Payment_Type == 'NA', "0") \
-                                  .when(df.Payment_Type == 'No',"3").when( df.Payment_Type == 'NOC',"3").when( df.Payment_Type == 'No Charge', "3") \
+                                  .when(df.Payment_Type == 'UNK',"0").when( df.Payment_Type ==  'Unknown',"0").when( df.Payment_Type ==  'UNKNOWN' , "0").when(df.Payment_Type == 'NA ', "0") \
+                                  .when(df.Payment_Type == 'No ',"3").when( df.Payment_Type == 'NOC',"3").when( df.Payment_Type == 'No Charge', "3") \
                                   .otherwise( df.Payment_Type))
 
 
