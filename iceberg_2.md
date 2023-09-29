@@ -103,14 +103,15 @@ Les deux tables sont maintenant identiques, à l’ordre près. Bonne nouvelle, 
 
 Export des fichiers : 
 
-Notons encore un élément, l'occupation du disque dur :
+Notons encore un élément, sur l'occupation du disque dur :
+* sur les fichiers de départ :
+  * l'ensemble des fichiers parquet fait au départ 27,9 Go ;
+  * la table Iceberg fait seulement 18,6 Go ;
+* sur les fichiers corrigés :
+  * l'ensemble des fichiers modifié fait 26,3 Go ;
+  * la table Iceberg corrigée fait 18,9 Go.
+La transformation a peu réduit la taille des fichiers, probablement parce que nous ne paramétrons pas la production des fichiers parquet. En revanche la table au format parquet est toujours plus petite. Le repertoire data n'est pas une simple copie des données chargée. En dépit des snap.....
 
-* l'ensemble des fichiers parquet fait au départ 27,9 Go ;
-* la table Iceberg fait seulement 18.6 Go ;
-* l'ensemble des fichiers modifié fait XXX Go ;
-* la table Iceberg corrigée fait XXXX Go.
-
-Le repertoire data n'est pas une simple copie des données chargée. En dépit des snap.....
 > Enseignement 4 : Iceberg optimise automatiquement la taille des fichers parquets.
 
 
