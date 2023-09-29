@@ -111,6 +111,7 @@ Notons encore un élément, sur l'occupation du disque dur :
   * l'ensemble des fichiers modifié fait 26,3 Go ;
   * la table Iceberg corrigée fait 18,9 Go.
 
+  
 La transformation a peu réduit la taille des fichiers, probablement parce que nous ne paramétrons pas la production des fichiers parquet. En revanche la table au format parquet est toujours plus petite. Le repertoire data n'est pas une simple copie des données chargée. En dépit des snap.....
 
 > Enseignement 4 : Iceberg optimise automatiquement la taille des fichers parquets.
