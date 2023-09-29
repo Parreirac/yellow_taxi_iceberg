@@ -19,7 +19,6 @@ Mais ne pouvait-on pas déjà avoir des tables sur plusieurs fichier ? Oui, il 
 
 Pour réaliser tout cela, et bien plus encore puisque la communauté Iceberg est très active, les développeurs ont dû produire beaucoup de travail, d'où le choix du nom « Iceberg ». Pour « quelques » fonctionnalités visibles au-dessus de la surface, de nombreuses autres restent cachées sous la surface.
 
-
 ## L’origine du besoin : se simplifier la vie
 
 Lorsqu'on exploite une table sous forme d'un ensemble de fichiers, cela peut occasionner d'importants problèmes lorsque ces fichiers ne suivent pas rigoureusement le même schéma. Cela peut conduire à des résultats variables en fonction de l'ordre dans lequel les fichiers sont lus, voire à l'échec de l'exécution d'une requête. Ce n'est alors pas la lecture des fichiers qui est en cause. Par conséquent, si une colonne change de nom ou de type, et c’est fréquent dans les données réels, le traitement va s’interrompre. Bien que Spark propose de fonctionnalités pour y remédier cela représente des désagréments pour tous. 
@@ -70,9 +69,12 @@ Cette architecture permet la réutilisation de fichiers entre plusieurs snapshot
 
 En outre, chaque snapshot contient le schéma associé à sa transaction. Ce qui signifie que chaque insertion a le même poids, sans nécessiter de référence au schéma initial de la table. Cette capacité permet de construire des tables sur un datalake, car tous les fichiers peuvent rester dans leur format d'origine.
 
-Cependant, si un grand nombre de snapshots s'accumulent, l'exécution des requêtes peut ralentir. Pour faire face à cette situation, Iceberg propose un mécanisme de péremption qui consiste à supprimer les snapshots trop anciens (par défaut, ceux datant de plus de cinq jours). Il convient de noter que cette opération peut être lente, car elle peut nécessiter la réécriture potentielle de l'ensemble des fichiers de données. Iceberg ne remplace donc pas le système de sauvegarde de votre plateforme, c'est une souplesse accrue sans surcharge de travail pour les administrateurs.
+Cependant, en cas d'accumulation d'un grand nombre de snapshots, plusieurs problèmes peuvent survenir. Tout d'abord, l'exécution des requêtes peut ralentir, car les informations se fragmentent sur un grand nombre de manifests lists. Il peut également y avoir un impact sur l'espace disque. Il est d'ailleurs à noter qu'avec Iceberg `TRUNCATE` vide une table mais sans libérer d'espace disque, car un snapshot sans donnée est créé, mais les snapshots antérieurs sont toujours disponibles.
 
-## Vous en voulez encore ?
+Face à ces défis, Iceberg propose diverses fonctionnalités, la solution la plus simple consiste en un mécanisme de péremption qui invalide automatiquement les snapshots trop anciens (par défaut, ceux datant de plus de cinq jours). Mais cette opération peut prendre du temps car elle peut nécessiter la réécriture de nombreux fichiers.
+Ainsi, Iceberg n'a pas pour vocation de se substituer au système de sauvegarde de votre plateforme. Au lieu de cela, il offre une flexibilité accrue dans la gestion des données sans imposer de charge de travail aux administrateurs.
+
+## Pas encore convaincu ? 
 
 Iceberg a vu le jour chez Netflix en 2017, puis est devenu un projet de la Fondation Apache en 2018. Chez Netflix, les journaux des serveurs étaient d'une telle ampleur que la planification de requêtes prenait plusieurs minutes et leur exécution des heures, limitant ainsi les requêtes à une semaine de données au maximum. Grâce à Iceberg, les requêtes sont aujourd'hui plus rapides et peuvent porter sur une plage temporelle s'étendant jusqu'à un mois. La documentation Iceberg rapporte que Netflix a observé un gain de performance pouvant aller jusqu'à un [facteur 10]( https://conferences.oreilly.com/strata/strata-ny-2018/cdn.oreillystatic.com/en/assets/1/event/278/Introducing%20Iceberg_%20Tables%20designed%20for%20object%20stores%20Presentation.pdf). 
 
@@ -83,3 +85,4 @@ Cependant les besoins de Netflix ne sont pas nécessairement représentatifs de 
 * et même pour les clients exigents, il existe du [support commercial](https://iceberg.apache.org/vendors/). 
 
 En conclusion, il est important de noter qu'Iceberg ne prétend pas être la solution à tous les problèmes. Si vous avez besoin de mettre à jour fréquemment les données d'une table plutôt que de simplement les ajouter, vous pourriez trouver qu'Apache Hudi est une option plus adaptée. De plus, dans le domaine des solutions payantes, Databricks propose un outil performant, bien plus que sa version gratuite qui ne propose pas l'ensemble de ces fonctionnalités. Cependant, pour la plupart des cas d'utilisation, même au sein d'un environnement de data warehouse, l'adoption du format Iceberg s'avère avantageuse.
+
