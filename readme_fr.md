@@ -1,4 +1,7 @@
-# trouver un nom
+Ce document propose un retour d'expérience sur l'utilisation d'Iceberg pour la conversion de format de fichier parquet. Il s'agit d'aligner tous ces fichier sur un unique schéma, alors que les données réelles proposent un grand nombre d'anomalies (11 schémas différent en septembre 2023).0
+
+# Conversion du dataset yellow taxis sur un schéma unique
+
 
 Green Taxis est un jeu de données réel sujet à des aléas fréquents dans la vie du data engenieurs : les types des colonnes changent. Dans notre cas aucun probleme de dépassement de capacité, mais pour Spark, c’est non. Pour valider le code développé, une solution est de restreindre le jeu de données sur une periode plus courte, sans changement de schéma, par exemple d’octobre 2018 à décembre 2021. Ce faisant le jeu de données ne fait qu'environ 600 Mo. Dans ce cas les performances entre Parquet et Iceberg sont proches.
 
@@ -50,21 +53,22 @@ Les problèmes de types sont gérés par Iceberg. Pour corriger les problemes de
 - le fichier à 18 colonnes ou le nom de la derniere colonne commence par « _ » ; 
 - les autres cas.
 
-Nous devons maintenant traiter le problème des coordonnées. La difficulté ici est le temps de calcul pour déterminer si un point est dans un polygone car cette opération est chronophage.
-On peut créer une table contenant, suivant un pas fixé toutes les coordonnées possibles et la zone correspondante. Indiquons qu'à New York, un deplacement de 0.001 degré est environ 10 mètres.
+Nous devons maintenant traiter le problème des coordonnées. la solution rigoureuse est d'utiliser une jointure géographique, voir par exemple [ici](https://towardsdatascience.com/geospatial-operations-at-scale-with-dask-and-geopandas-4d92d00eb7e8). La difficulté ici est le temps de calcul pour déterminer si un point est dans un polygone car cette opération est chronophage. On peut réaliser une solution approchée, d'une grande précision et beaucoup plus rapide. On peut créer une table contenant, suivant un pas fixé toutes les coordonnées possibles et la zone correspondante. Indiquons qu'à New York, un deplacement de 0.001 degré est environ 10 mètres.
 
-Pour se faire on peut utiliser [GeoPandas](https://geopandas.org/en/stable/#), qui gère de facon transparente les coordonnées dans [le fichier shapefile fourni](https://d37ci6vzurychx.cloudfront.net/misc/taxi_zones.zip) avec le jeu de données (qui n'est pas en latitude/longitude). 
-On va devoir faire de nombreuse fois le test « point dans un polygone », qui est un calcul lent. Une solution ici est d’utiliser les fonctionnalités offertes par géoPandas, ici la [triangulation de Delaunay](https://fr.wikipedia.org/wiki/Triangulation_de_Delaunay). Chaque zone est découpée en triangle on n’a plus qu’a transformer les triangles en pixels (raster), voir par exemple [ici](http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html).
+Un préliminaire est de prendre en compte la projection utilisée dans [le fichier shapefile fourni](https://d37ci6vzurychx.cloudfront.net/misc/taxi_zones.zip) avec le jeu de données, car il n'est pas en latitude/longitude. 
+Pour se faire on peut utiliser [GeoPandas](https://geopandas.org/en/stable/#), qui fait cela de facon transparente.
+On peut alors simplifier les polygones (voir la documentation de la fonctionalité [ici](https://shapely.readthedocs.io/en/latest/manual.html#object.simplify)) pour réduire la complexité des opérations, et afin de ne pas avoir à tester des géométries complexes on peut 
+utiliser la [triangulation de Delaunay](https://fr.wikipedia.org/wiki/Triangulation_de_Delaunay). Chaque zone est découpée en triangle on n’a plus qu’a transformer les triangles en pixels (raster), voir par exemple [ici](http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html).
 
-La creation de cette table de conversion nécessite 10 minutes de calcul, sur un bon ordinateur portable. Pour la conversion, on n'a plus qu'à réaliser une simple jointure :
+Le prétraitement du terrain se fait en une trentaine de secondes, et la création du fichier nécessite 10 minutes de calcul, sur un bon ordinateur portable. Pour la conversion, on n'a plus qu'à réaliser une simple jointure :
 
 ```python
 df1 = df.withColumn("latitude", round(df["Start_lat"] * 1000))\
         .withColumn("longitude", round(df["Start_lon"] * 1000))
 
-df2 =  df1.join(locId_df,on = ["latitude","longitude"],how='inner')\
-          .drop(*("Start_lon","Start_lat","longitude","latitude"))\
-          .withColumnRenamed("LocationID", "PULocationID")
+df2 = df1.join(locId_df,on = ["latitude","longitude"],how='inner')\
+         .drop(*("Start_lon","Start_lat","longitude","latitude"))\
+         .withColumnRenamed("LocationID", "PULocationID")
 ```
 Notons que pour passer de l'ancien au nouveau format, la colonne « extra » est renommée en « surcharge », qui est en fait un « surcharge and extra ».
 
@@ -129,10 +133,30 @@ si on regarde 2009 on a 2/3 cas 1/ credit card
 
 ## Probleme de performance :
 
-La tranformation des données est rapide : 1/12 du dataset en 22 min. Mais apres plus de 10 heures la sauvegarde n'est pas tereminée. Le filtrage et l'écriture sont lents.
+Mais apres plus de 10 heures la sauvegarde n'est pas terminée.
+Si je n'utilise que les mois de décembre, j'ai 20 min pour réaliser les transformations sur les données, et 80 minutes pour le trier et les sauvegarder.
+On peut donc estimer le temps de calcul à environ 16 heures.
 
-Une solution est d'utiliser le partitionnement d'Iceberg.
- 
+Dans la version initiale, j'avais pour le datafrale `df` :
+```python
+df_with_year_month = df.withColumn("year", year(col("tpep_pickup_datetime")))\
+                       .withColumn("month", month(col("tpep_pickup_datetime")))
+
+# Récupérer les combinaisons uniques année-mois
+year_month_combinations = df_with_year_month.select("year", "month").distinct().collect()
+
+# Pour chaque combinaison année-mois, filtrer les données et écrire un fichier Parquet distinct
+for row in year_month_combinations:
+    year_value = row["year"]
+    month_value = row["month"]
+
+    filtered_df = df_with_year_month.filter((col("year") == year_value) & (col("month") == month_value)).drop("year", "month")
+
+    output_path = f"hdfs://mycluster:8020/user/tdp_user/data/my_nyc_green_taxi_trip/green_tripdata_{year_value}-{month_value:02d}.parquet"
+    filtered_df.write.mode("overwrite").parquet(output_path)
+```
+
+Une solution est d'utiliser le partitionnement d'Iceberg pour ne trier qu'une fois les données, à la création de la table. Adaptons le code en conséquence :
 ```python
 spark.sql("CREATE TABLE IF NOT EXISTS local.nyc.tempo_yellow (\
 VendorID string, tpep_pickup_datetime timestamp, tpep_dropoff_datetime timestamp, passenger_count double,trip_distance double,\
@@ -141,7 +165,17 @@ extra double, mta_tax double, tip_amount double, tolls_amount double, improvemen
 congestion_surcharge double, airport_fee double) \
 USING iceberg PARTITIONED BY (months(tpep_pickup_datetime));")
 ```
+Grace à l'extension SQL que propose Iceberg, je peux directement voir les fichiers associés aux différentes partitions
 
+```python
+# l'un ou l'autre ?
+spark.sql("select  file_path, record_count, partition from local.nyc.tempo_yellow.files").show(truncate=False)
+spark.sql("select * from local.nyc.tempo_yellow.partitions").show()
+# TODO : choisir (?) et afficher le resultat on doit pouvoir voir les partitions pas mois ie nb_mois depuis janvier 1970.
+```
+(Voir [l'aide mémoire](https://tabular.io/downloads/tabular_iceberg-spark_cheat-sheet.pdf) pour une liste complète de l'extension SQL.)
+Mais le plus simple pour connaitre est de regarder directement 
+On peut alors directement lire sur le cluster les données triées par partition :
 ```bash
 [tdp_user@edge-01 ~]$ hdfs dfs -du  -h warehouse_hadoop_iceberg/nyc/tempo_yellow/data
 77.8 K   233.4 K  warehouse_hadoop_iceberg/nyc/tempo_yellow/data/tpep_pickup_datetime_month=2001-01
@@ -156,7 +190,10 @@ USING iceberg PARTITIONED BY (months(tpep_pickup_datetime));")
 5.4 K    16.2 K   warehouse_hadoop_iceberg/nyc/tempo_yellow/data/tpep_pickup_datetime_month=2004-04
 ```
 
-Au final 300 min !
+Mais attention, ces repertoires contiennent un ou plusieurs fichiers (Parquet). Pour régénérer mes fichiers avec la même organisation, un fichier par année et par mois, je dois encore lire ces repertoires et fusionner les fichiers. 
+On passe ainsi de plus de 10 heures à moins 5h de traitement. 
+
+## Effet sur l'espace disque 
 
 ```bash
 [tdp_user@edge-01 ~]$ hdfs dfs -du  -h warehouse_hadoop_iceberg/nyc/tempo_yellow/
@@ -174,6 +211,3 @@ On peut noter :
 * la table transformée est plus grande. Probablement l'abscence de paramétrage dans l'écriture des fichiers parquets.
 
 Le chargement de ces données dans iceberg (pour ne pas avoir x snap) :
-
-
-
