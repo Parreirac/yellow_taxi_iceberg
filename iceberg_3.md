@@ -13,6 +13,26 @@ Choix du dataset New York Yellow Taxis, plus axé OLAP qui est notre cible, alor
 * chronometrer les requetes, N fois. On fait un calculde moyenne et d'écart type. Nous servira pour comparer les résultats
 * jeter la première requête qui est bien plus lente que les autres (STD élevée). A priori, Spark doit charger des librairies.
 
+Sur Green Taxi (1.2) :
+		sans snap	avec
+GB count	moyenne	1,512452171	1,116800573
+	ecarttype	0,11290709	0,110071188
+GB avg	moyenne	1,430729751	1,092951456
+	ecarttype	0,294611627	0,205862758
+where	moyenne	2,562078511	1,344238166
+	ecarttype	0,854488229	0,10515185
+			
+GB count ou avg, proche.		1.47 +/- .20	
+where		2.5	
+
+Sur mon Yellow taxis, premier tests avec 15 requetes. 5 split 5 mesures par requets.
+J'élimine les requetes "equivalentes", je garde donc la requete type et la meilleure.
+
+Je passe à une relance avec plus de split, géométrique. Pour observer l'inflexion.
+
+Avec ce jeu de données, je peux observer que Q4 Q5 est similaire en perf à Q2. Q3 est en best
+Q8 est médian Q7 est best
+9 est médian Q11 est best
 
 ## Outils complementaires 
 
