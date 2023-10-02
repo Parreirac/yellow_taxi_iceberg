@@ -1,4 +1,4 @@
-Ce document propose un retour d'expérience sur l'utilisation d'Iceberg pour la conversion de format de fichier parquet. Il s'agit d'aligner tous ces fichier sur un unique schéma, alors que les données réelles proposent un grand nombre d'anomalies (11 schémas différent en septembre 2023).0
+Ce document propose un retour d'expérience sur l'utilisation d'Iceberg pour la conversion de format de fichier parquet. Il s'agit d'aligner tous ces fichier sur un unique schéma, alors que les données réelles proposent un grand nombre d'anomalies (11 schémas différent en septembre 2023).
 
 # Conversion du dataset yellow taxis sur un schéma unique
 
