@@ -3,7 +3,7 @@ Ce document propose un retour d'expérience sur l'utilisation d'Iceberg pour la 
 # Conversion du dataset yellow taxis sur un schéma unique
 
 
-Green Taxis est un jeu de données réel sujet à des aléas fréquents dans la vie du data engenieurs : les types des colonnes changent. Dans notre cas aucun probleme de dépassement de capacité, mais pour Spark, c’est non. Pour valider le code développé, une solution est de restreindre le jeu de données sur une periode plus courte, sans changement de schéma, par exemple d’octobre 2018 à décembre 2021. Ce faisant le jeu de données ne fait qu'environ 600 Mo. Dans ce cas les performances entre Parquet et Iceberg sont proches.
+Green Taxis est un jeu de données réel sujet à des aléas fréquents dans la vie du data ingenieurs : les types des colonnes changent. Dans notre cas aucun probleme de dépassement de capacité, mais pour Spark, c’est non. Pour valider le code développé, une solution est de restreindre le jeu de données sur une periode plus courte, sans changement de schéma, par exemple d’octobre 2018 à décembre 2021. Ce faisant le jeu de données ne fait qu'environ 600 Mo. Dans ce cas les performances entre Parquet et Iceberg sont proches.
 
 > Enseignement 1 : sur un petit jeu de données la différence de performance est négligeable.
 
