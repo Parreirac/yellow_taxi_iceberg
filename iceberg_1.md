@@ -47,7 +47,7 @@ Iceberg va encore plus loin en utilisant davantage de métadonnées, notamment l
 
 Cela permet d'améliorer considérablement l'élagage des données, ce qui se traduit par des performances accrues.
 
-En outre, comme dans Iceberg ces informations sont stockées séparément, il n’est donc pas nécessaire d’accéder au répertoire data pour commencer un travail sur une table. Certaines requêtes simple peuvent être traitées sans aucun accès au répertoire des données, seulement par un accès au répertoire des métadonnées. 
+En outre, comme dans Iceberg ces informations sont stockées séparément, il n’est donc pas nécessaire d’accéder au répertoire data pour commencer un travail sur une table. Certaines requêtes simples peuvent être traitées sans aucun accès au répertoire des données, seulement par un accès au répertoire des métadonnées. 
 
 ### Une nouvelle organisation des informations
 
