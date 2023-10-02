@@ -56,7 +56,7 @@ La refonte de l’organisation des informations est plus complexe. Les formats d
 Avec Iceberg, chaque transaction génère un ensemble de fichiers appelé « snapshot » qui permet de connaître l’état courant de la table. Une transaction « n'écrase » donc pas des valeurs antérieures. Ceci permet : 
 
 * l'isolation des transactions sans nécessiter la mise en place de verrous ; 
-* de revenir à un état anterieur de la table, simplement en changeant l'index du snapshot courant, c'est le « time travel / roll back ».
+* de revenir à un état antérieur de la table, simplement en changeant l'index du snapshot courant, c'est le « time travel / roll back ».
 
 Les informations d’un snapshot se répartissent sur trois niveaux :
 
