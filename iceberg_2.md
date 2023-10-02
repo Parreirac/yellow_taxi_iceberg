@@ -17,7 +17,7 @@ Adaltas contribue au soutien d’une solution Hadoop open source dénommée TDP 
 
 Iceberg est implémenté dans de nombreux outils mais n’est pas compatible avec la version actuelle de Hive (XXX) de TDP. En revanche pour Spark (3.2.2-0.0) l’ajout d’un simple fichier jar (téléchargeable [ici](https://iceberg.apache.org/releases/#downloads)) permet d’utiliser les fonctionnalités portées par Iceberg. Python étant un langage répandu, nous utiserons pySpark.
 
-Un site de support existe pour TDP. Il fournit des guides pour les différents composants et également des jeux de données comme celui sur [l’emploi des taxis verts à New York](https://www.alliage.io/en/academy/datasets/ny-green-taxi), qui fait 1.2 Go, avec un fichier Parquet par mois. Précisons, que les taxis sont jaunes en « centre » ville et verts à la périphérie, d’où le nom des jeux de données. Une option de script `--dataset yellow` du script permet de changer le dataset, 27,9 Go de données sont téléchargées sur votre cluster.
+Un site de support existe pour TDP. Il fournit des guides pour les différents composants et également des jeux de données comme celui sur [l’emploi des taxis verts à New York](https://www.alliage.io/en/academy/datasets/ny-green-taxi), qui fait 1.2 Go, avec un fichier Parquet par mois. Précisons, que les taxis sont jaunes en « centre » ville et verts à la périphérie, d’où le nom des jeux de données. Une option de script `--dataset yellow` permet de changer le dataset, 27,9 Go de données sont alors téléchargées sur votre cluster.
 
 
 ## Paramètrage de pySpark
