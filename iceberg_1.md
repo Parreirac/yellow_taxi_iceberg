@@ -58,7 +58,7 @@ Avec Iceberg, chaque transaction génère un ensemble de fichiers appelé « sn
 * l'isolation des transactions sans nécessiter la mise en place de verrous ; 
 * de revenir à un état anterieur de la table, simplement en changeant l'index du snapshot courant, c'est le « time travel / roll back ».
 
-Les informations d’un snapshot se repartissent sur trois niveaux :
+Les informations d’un snapshot se répartissent sur trois niveaux :
 
 * dans le repertoire data, les fichiers de données ;
 * dans le repertoire metadata :
