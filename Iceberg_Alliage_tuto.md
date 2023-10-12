@@ -62,7 +62,7 @@ We will execute these queries in loops and measure the query execution times. Th
 - `NUM_RUN`: The number of times the dataset size changes.
 - `NUM_MES`: The number of times each query is repeated for measurement (must be greater than 1).
 
-The source code is avalable [script](here).
+The source code is avalable [script]([here](https://github.com/Parreirac/yellow_taxi_iceberg/blob/main/Compare.py)).
 
 
 Before launching a spark-submit, remember to correctly set the environment variables 
