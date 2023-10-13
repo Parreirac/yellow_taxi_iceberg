@@ -86,15 +86,14 @@ With the default parameter values, the calculation takes 3 minutes on a decent l
 9600000 | 1.5971 |1.4240|1.3928|3.0736 |4.3235|4.5640
 19200000 |1.5474 |1.9046|1.4480|3.6401 |4.9791 |5.9599
 
-
 For a small table, `WHERE` is a little slower, `GROUP BY` is already twice as fast, Iceberg is of little use.
 For medium tables, `WHERE` becomes a little faster, while `GROUP BY` becomes noticeably faster than for a default table.
 We can observe that most of the time a `GROUP BY` with a large cardinality increases the gain.
 
 The `WHERE` benefit from data pruning, while the `GROUP BY` is marked by the bloom filter which is all the more efficient as the cardinality is large.
 
-
-
+Visualization for a longer calculation :
+![ratio](https://github.com/Parreirac/yellow_taxi_iceberg/assets/108088065/3f281619-f036-4948-a0b8-1fb1fe5a6094)
 
 ## Conclusion
 The tutorial aims to help you understand Iceberg's performance benefits compared to Spark tables. Note that running memory-intensive tasks on small clusters can lead to memory saturation, so it's essential to monitor memory usage and avoid computationally intensive operations. Spark recommends keeping tasks under 1 GB in size to ensure smooth execution.
