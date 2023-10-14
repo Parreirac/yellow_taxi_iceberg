@@ -67,8 +67,8 @@ The source code is avalable [script]([here](https://github.com/Parreirac/yellow_
 
 Before launching a spark-submit, remember to correctly set the environment variables 
 ```bash
-export HADOOP_CONF_DIR=etchadoopconf
-export SPARK_HOME=opttdpspark3
+export HADOOP_CONF_DIR=/etc/hadoop/conf
+export SPARK_HOME=/opt/tdp/spark3
 /opt/tdp/spark3/bin/spark-submit Compare.py | tee results.txt
 ```
 
