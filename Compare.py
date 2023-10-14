@@ -2,13 +2,14 @@ import pyspark
 from pyspark import SparkConf
 from pyspark.sql import SQLContext,SparkSession
 import time
-import os
+#import os
 import sys
 import io
 from  pyspark.sql.types import StructType,StructField,IntegerType,TimestampType,IntegerType,DoubleType,StringType,FloatType,ByteType 
 from pyspark.sql.functions import col,concat,lpad,round
 #import gc
 import statistics as stats
+import random
 
 # Number of run for stat on query, must be > 1
 NUM_MES = 4 # 10 
@@ -19,14 +20,11 @@ NUM_RUN = 4 # 7
 # Number of computed rows
 BASE_SIZE = 75000 # 1000000
 
-import random
-from datetime import datetime, timedelta
+
 
 
 def gen_binomial(n,p):
     return sum(1 for _ in range(n) if random.random() < p)
-
-
 
 conf = SparkConf() \
         .setAppName("yellow taxis with Iceberg") \
@@ -43,15 +41,12 @@ conf = SparkConf() \
             ("spark.eventLog.dir","hdfs://mycluster:8020/spark3-logs"),
           ])
 
-
 # Create a Spark session
 spark = SparkSession.builder.config(conf=conf).getOrCreate()
 
 sc = spark.sparkContext
 sc.setLogLevel("WARN") 
 # Valid log levels include: ALL, DEBUG, ERROR, FATAL, INFO, OFF, TRACE, WARN
-
-
 
 # List of queries to execute
 queries = [
@@ -64,12 +59,10 @@ queries = [
 ]
 
 res_by_queries = {}
-
 output_buffer = io.StringIO()
 original_stdout = sys.stdout
 
 current_size = BASE_SIZE
-
 
 try:
        data = [( random.normalvariate(50,10),gen_binomial(4,.5),gen_binomial(50,.5),gen_binomial(100,.5)) for i in range(int(current_size))      ]
@@ -115,7 +108,6 @@ for i in range(NUM_RUN):
 
             show_duration_iceberg.append(end_time - start_time)
             sys.stdout = output_buffer
-
         sys.stdout = original_stdout
 
         for _ in range(NUM_MES):
@@ -127,23 +119,17 @@ for i in range(NUM_RUN):
 
             show_duration_base.append(end_time - start_time)
             sys.stdout = output_buffer
-
 #        gc.enable()
         sys.stdout = original_stdout
 
         computed_ratio = [  show_duration_base[i] / show_duration_iceberg[i] for i in range(len(show_duration_base))]
 
         res = f"{float(df_size_bytes)};{stats.mean(show_duration_iceberg)};{stats.stdev(show_duration_iceberg)};{stats.mean(show_duration_base)};{stats.stdev(show_duration_base)};{stats.mean(computed_ratio)}; { stats.stdev(computed_ratio)};"
-
         print(res)
-
 
         old_dic = res_by_queries.get(q_name, {})
         old_dic[df_size_bytes] = res
-
         res_by_queries[q_name] = old_dic
-
-# Stop the Spark session
 
 print("\n\n")
 for key, value in res_by_queries.items():
@@ -151,6 +137,7 @@ for key, value in res_by_queries.items():
     for k, v in value.items():
         print(v)
 
+# Stop the Spark session
 spark.stop()
 
 
