@@ -2,26 +2,20 @@ import pyspark
 from pyspark import SparkConf
 from pyspark.sql import SQLContext,SparkSession
 import time
-#import os
 import sys
 import io
-from  pyspark.sql.types import StructType,StructField,IntegerType,TimestampType,IntegerType,DoubleType,StringType,FloatType,ByteType 
-from pyspark.sql.functions import col,concat,lpad,round
-#import gc
+from  pyspark.sql.types import StructType,StructField,IntegerType,FloatType 
 import statistics as stats
 import random
 
 # Number of run for stat on query, must be > 1
-NUM_MES = 4 # 10 
+NUM_MES = 4 
 
 # Number of Size Test
-NUM_RUN = 4 # 7 
+NUM_RUN = 4 
 
 # Number of computed rows
-BASE_SIZE = 75000 # 1000000
-
-
-
+BASE_SIZE = 75000 
 
 def gen_binomial(n,p):
     return sum(1 for _ in range(n) if random.random() < p)
@@ -98,7 +92,7 @@ for i in range(NUM_RUN):
 
         show_duration_iceberg = []
         show_duration_base = []
- #       gc.disable()
+        
         for _ in range(NUM_MES):
             result = spark.sql(q_start + " FROM local.nyc.df "+q_end)
 
@@ -119,7 +113,7 @@ for i in range(NUM_RUN):
 
             show_duration_base.append(end_time - start_time)
             sys.stdout = output_buffer
-#        gc.enable()
+
         sys.stdout = original_stdout
 
         computed_ratio = [  show_duration_base[i] / show_duration_iceberg[i] for i in range(len(show_duration_base))]
